@@ -4,8 +4,8 @@ def advise(ranked: list[dict], budget: int) -> dict:
     second = ranked[1] if len(ranked) >= 2 else None
     third = ranked[2] if len(ranked) >= 3 else None
 
-    # 単勝
-    if top and top["score"] >= 70:
+    # 単勝（最大120点スケール）
+    if top and top["score"] >= 85:
         amount = int(budget * 0.4 / 100) * 100
         result["単勝"] = {
             "買い目": f"{top['number']}番 {top['name']}",
@@ -14,7 +14,7 @@ def advise(ranked: list[dict], budget: int) -> dict:
         }
 
     # 複勝
-    fukusho = [h for h in ranked[:2] if h["score"] >= 50]
+    fukusho = [h for h in ranked[:2] if h["score"] >= 65]
     if fukusho:
         amount = int(budget * 0.3 / 100) * 100
         targets = "・".join([f"{h['number']}番 {h['name']}" for h in fukusho])
@@ -26,16 +26,15 @@ def advise(ranked: list[dict], budget: int) -> dict:
 
     # 馬連・馬単
     if top and second:
-        amount_rentan = int(budget * 0.1 / 100) * 100
-        amount_fuku = int(budget * 0.1 / 100) * 100
+        amount = int(budget * 0.1 / 100) * 100
         result["馬連"] = {
             "買い目": f"{top['number']}番-{second['number']}番",
-            "金額": amount_fuku,
-            "理由": f"スコア1位×2位の組み合わせ",
+            "金額": amount,
+            "理由": "スコア1位×2位の組み合わせ",
         }
         result["馬単"] = {
             "買い目": f"{top['number']}番→{second['number']}番",
-            "金額": amount_rentan,
+            "金額": amount,
             "理由": f"{top['name']}が1着、{second['name']}が2着を予想",
         }
 
