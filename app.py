@@ -15,17 +15,18 @@ with st.sidebar:
     num_horses = st.number_input("出走頭数", min_value=2, max_value=18, value=8, step=1)
     budget = st.number_input("予算（円）", min_value=500, max_value=100000, value=3000, step=500)
     st.markdown("---")
-    st.markdown("**スコア基準（合計最大120点）**")
+    st.markdown("**地力スコア基準（オッズ除外・純粋な能力評価）**")
     st.markdown(
-        "- オッズ：20点\n"
-        "- 前走着順：15点\n"
-        "- 直近3走平均：20点\n"
+        "- 前走着順：6点\n"
+        "- 直近3走平均：12点\n"
+        "- トレンド（改善傾向）：±4点\n"
         "- 上がり3F：15点\n"
-        "- 騎手勝率：15点\n"
+        "- 騎手勝率＋大舞台補正：最大23点\n"
         "- 距離・コース・馬場適性：10点\n"
         "- 調教評価：5点\n"
         "- 馬体重変動：10点\n"
-        "- 枠番：10点"
+        "- 枠番：10点\n\n"
+        "**期待値指数 = 地力スコア × オッズ ÷ 10**"
     )
 
 # --- netkeiba URL 自動取得 ---
@@ -94,7 +95,7 @@ for i in range(n):
 
     number = cols[0].number_input("", min_value=1, max_value=18, value=d.get("number", i+1), key=f"num_{i}", label_visibility="collapsed")
     name = cols[1].text_input("", value=d.get("name", f"馬{i+1}"), key=f"name_{i}", label_visibility="collapsed")
-    ninki = cols[2].number_input("", min_value=0, max_value=18, value=d.get("ninki", 0), key=f"ninki_{i}", label_visibility="collapsed")
+    ninki = cols[2].number_input("", min_value=0, max_value=18, value=min(d.get("ninki", 0), 18), key=f"ninki_{i}", label_visibility="collapsed")
     odds = cols[3].number_input("", min_value=1.0, max_value=999.9, value=float(d.get("odds", 10.0)), step=0.1, key=f"odds_{i}", label_visibility="collapsed")
     jockey = cols[4].text_input("", value=d.get("jockey", ""), key=f"jockey_{i}", label_visibility="collapsed")
     last_place = cols[5].number_input("", min_value=1, max_value=18, value=d.get("last_place", 5), key=f"place_{i}", label_visibility="collapsed")
