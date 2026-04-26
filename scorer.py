@@ -48,15 +48,17 @@ def score_odds(odds: float) -> int:
 
 def score_last_place(place: int) -> int:
     if place == 1:
-        return 10
-    elif place == 2:
-        return 8
-    elif place == 3:
         return 6
+    elif place == 2:
+        return 5
+    elif place == 3:
+        return 4
     elif place <= 5:
         return 3
+    elif place <= 8:
+        return 2
     else:
-        return 1
+        return 1  # 9着以下も1点（大差をつけない）
 
 
 def score_recent3(places: list[int]) -> int:
@@ -64,15 +66,31 @@ def score_recent3(places: list[int]) -> int:
         return 0
     avg = sum(places) / len(places)
     if avg <= 2:
-        return 20
+        return 12
     elif avg <= 4:
-        return 16
-    elif avg <= 6:
         return 10
+    elif avg <= 6:
+        return 7
     elif avg <= 9:
-        return 5
+        return 4
     else:
         return 1
+
+
+def score_trend(recent3: list[int]) -> int:
+    """着順のトレンド（改善傾向＝プラス、悪化傾向＝マイナス）"""
+    if len(recent3) < 2:
+        return 0
+    # recent3 = [3走前, 2走前, 前走]
+    first = recent3[0]
+    last = recent3[-1]
+    if last < first - 2:   # 明確に改善
+        return 4
+    elif last < first:     # やや改善
+        return 2
+    elif last > first + 2: # 明確に悪化
+        return -2
+    return 0
 
 
 def score_weight_change(change: int) -> int:
@@ -154,9 +172,11 @@ def score_training(training: str) -> int:
 
 def calc_score(horse: dict) -> int:
     """地力スコア（オッズ・人気を含まない純粋な能力評価）"""
+    recent3 = horse.get("recent3", [])
     return (
         score_last_place(horse["last_place"])
-        + score_recent3(horse.get("recent3", []))
+        + score_recent3(recent3)
+        + score_trend(recent3)
         + score_weight_change(horse["weight_change"])
         + score_gate(horse["gate"])
         + score_agari3f(horse.get("agari3f_avg"))
