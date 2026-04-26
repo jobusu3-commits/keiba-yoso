@@ -153,10 +153,9 @@ def score_training(training: str) -> int:
 
 
 def calc_score(horse: dict) -> int:
+    """地力スコア（オッズ・人気を含まない純粋な能力評価）"""
     return (
-        score_ninki(horse.get("ninki", 0))
-        + score_odds(horse["odds"])
-        + score_last_place(horse["last_place"])
+        score_last_place(horse["last_place"])
         + score_recent3(horse.get("recent3", []))
         + score_weight_change(horse["weight_change"])
         + score_gate(horse["gate"])
@@ -165,6 +164,11 @@ def calc_score(horse: dict) -> int:
         + score_distance_fit(horse.get("distance_fit", 0.5))
         + score_training(horse.get("training", "B"))
     )
+
+
+def calc_ev(horse: dict) -> float:
+    """期待値指数 = 地力スコア × オッズ ÷ 10（高いほど市場が見落としている）"""
+    return round(horse["score"] * horse["odds"] / 10, 1)
 
 
 def find_anaba(horses: list[dict]) -> list[dict]:
@@ -190,4 +194,5 @@ def find_anaba(horses: list[dict]) -> list[dict]:
 def rank_horses(horses: list[dict]) -> list[dict]:
     for h in horses:
         h["score"] = calc_score(h)
+        h["ev"] = calc_ev(h)
     return sorted(horses, key=lambda h: h["score"], reverse=True)

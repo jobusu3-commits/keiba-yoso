@@ -130,7 +130,7 @@ if st.button("🔍 予想する", type="primary", use_container_width=True):
     st.header("③ スコアランキング")
     df = pd.DataFrame([
         {
-            "順位": i+1,
+            "順位\n(地力)": i+1,
             "馬番": h["number"],
             "馬名": h["name"],
             "人気": f"{h['ninki']}番人気" if h.get("ninki") else "-",
@@ -143,7 +143,8 @@ if st.button("🔍 予想する", type="primary", use_container_width=True):
             "調教": h.get("training", "-"),
             "体重増減": f"{h['weight_change']:+d}kg",
             "枠番": h["gate"],
-            "スコア": h["score"],
+            "地力スコア": h["score"],
+            "期待値指数": h.get("ev", "-"),
         }
         for i, h in enumerate(ranked)
     ])
@@ -160,6 +161,24 @@ if st.button("🔍 予想する", type="primary", use_container_width=True):
         return [""] * len(row)
 
     st.dataframe(df.style.apply(highlight_top3, axis=1), use_container_width=True, hide_index=True)
+
+    # 期待値ランキング
+    st.header("③-A 期待値ランキング（地力 × オッズ）")
+    st.caption("地力スコアが高いのにオッズが高い馬＝市場が見落としている馬")
+    ev_sorted = sorted(ranked, key=lambda h: h.get("ev", 0), reverse=True)[:5]
+    df_ev = pd.DataFrame([
+        {
+            "馬番": h["number"],
+            "馬名": h["name"],
+            "人気": f"{h.get('ninki', '?')}番人気",
+            "オッズ": f"{h['odds']}倍",
+            "地力スコア": h["score"],
+            "期待値指数": h.get("ev", "-"),
+        }
+        for h in ev_sorted
+    ])
+    st.dataframe(df_ev, use_container_width=True, hide_index=True)
+    st.caption("💡 期待値指数が高い馬は「実力の割に買われていない馬」。穴馬候補と重なれば特に注目。")
 
     # 穴馬候補
     if anaba:
