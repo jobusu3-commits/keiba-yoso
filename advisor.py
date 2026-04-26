@@ -1,10 +1,10 @@
-def advise(ranked: list[dict], budget: int) -> dict:
+def advise(ranked: list[dict], budget: int, anaba: list[dict] = None) -> dict:
     result = {}
     top = ranked[0] if len(ranked) >= 1 else None
     second = ranked[1] if len(ranked) >= 2 else None
     third = ranked[2] if len(ranked) >= 3 else None
 
-    # 単勝（最大120点スケール）
+    # 単勝
     if top and top["score"] >= 85:
         amount = int(budget * 0.4 / 100) * 100
         result["単勝"] = {
@@ -38,7 +38,7 @@ def advise(ranked: list[dict], budget: int) -> dict:
             "理由": f"{top['name']}が1着、{second['name']}が2着を予想",
         }
 
-    # 三連複・三連単
+    # 三連複（通常）
     if top and second and third:
         amount = int(budget * 0.05 / 100) * 100
         nums = f"{top['number']}-{second['number']}-{third['number']}"
@@ -52,5 +52,18 @@ def advise(ranked: list[dict], budget: int) -> dict:
             "金額": amount,
             "理由": "スコア順に1・2・3着を予想（高配当狙い）",
         }
+
+    # 穴馬三連複（穴馬がいる場合）
+    if anaba and top and second:
+        for ana in anaba[:1]:
+            nums_set = sorted({top["number"], second["number"], ana["number"]})
+            if len(nums_set) == 3:
+                amount = int(budget * 0.05 / 100) * 100
+                nums_str = "-".join(str(n) for n in nums_set)
+                result["三連複（穴馬込み）"] = {
+                    "買い目": f"{nums_str}（穴：{ana['number']}番 {ana['name']}）",
+                    "金額": amount,
+                    "理由": f"{ana['name']}（{ana.get('ninki', '?')}人気）を穴馬として組み込んだ高配当狙い",
+                }
 
     return result

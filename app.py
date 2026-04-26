@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-from scorer import rank_horses
+from scorer import rank_horses, find_anaba
 from advisor import advise
 from scraper import fetch_race_data
 
@@ -125,6 +125,7 @@ for i in range(n):
 # --- 予想実行 ---
 if st.button("🔍 予想する", type="primary", use_container_width=True):
     ranked = rank_horses(horses)
+    anaba = find_anaba(ranked)
 
     st.header("③ スコアランキング")
     df = pd.DataFrame([
@@ -160,8 +161,27 @@ if st.button("🔍 予想する", type="primary", use_container_width=True):
 
     st.dataframe(df.style.apply(highlight_top3, axis=1), use_container_width=True, hide_index=True)
 
+    # 穴馬候補
+    if anaba:
+        st.header("③-B 穴馬候補")
+        st.caption("4〜9人気の中で前走成績・上がり・騎手実績から選出")
+        df_anaba = pd.DataFrame([
+            {
+                "馬番": h["number"],
+                "馬名": h["name"],
+                "人気": f"{h.get('ninki', '?')}番人気",
+                "オッズ": f"{h['odds']}倍",
+                "騎手": h["jockey"],
+                "前走": f"{h['last_place']}着",
+                "上がり3F": f"{h['agari3f_avg']:.1f}" if h.get("agari3f_avg") else "-",
+                "スコア": h["score"],
+            }
+            for h in anaba
+        ])
+        st.dataframe(df_anaba, use_container_width=True, hide_index=True)
+
     st.header("④ 馬券の買い目")
-    advice = advise(ranked, budget)
+    advice = advise(ranked, budget, anaba)
 
     if not advice:
         st.warning("スコアが低くて推奨できる馬券がありません。")

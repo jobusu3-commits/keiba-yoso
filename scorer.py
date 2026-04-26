@@ -1,5 +1,22 @@
+ELITE_JOCKEYS = {
+    "武豊":   8,
+    "川田":   7,
+    "ルメール": 7,
+    "デムーロ": 6,
+    "横山武":  5,
+    "戸崎":   5,
+    "坂井":   5,
+    "松山":   4,
+    "北村友":  4,
+    "三浦":   4,
+    "岩田康":  4,
+    "池添":   3,
+    "福永":   5,
+    "田辺":   3,
+}
+
+
 def score_ninki(ninki: int) -> int:
-    """人気順位（1が最高）"""
     if ninki == 0:
         return 3
     if ninki == 1:
@@ -78,7 +95,6 @@ def score_gate(gate: int) -> int:
 
 
 def score_agari3f(agari3f_avg) -> int:
-    """上がり3F平均（秒）。低いほど速い"""
     if agari3f_avg is None:
         return 8
     if agari3f_avg <= 33.0:
@@ -93,22 +109,29 @@ def score_agari3f(agari3f_avg) -> int:
         return 1
 
 
-def score_jockey(win_rate: float) -> int:
-    """騎手勝率（0〜1）"""
+def score_jockey(win_rate: float, jockey_name: str = "") -> int:
+    base = 0
     if win_rate >= 0.20:
-        return 15
+        base = 15
     elif win_rate >= 0.15:
-        return 12
+        base = 12
     elif win_rate >= 0.10:
-        return 8
+        base = 8
     elif win_rate >= 0.06:
-        return 4
+        base = 4
     else:
-        return 1
+        base = 1
+
+    # 大舞台補正
+    for name, bonus in ELITE_JOCKEYS.items():
+        if name in jockey_name:
+            base += bonus
+            break
+
+    return base
 
 
 def score_distance_fit(fit: float) -> int:
-    """距離・コース・馬場の総合適性（0〜1）"""
     if fit >= 0.80:
         return 10
     elif fit >= 0.60:
@@ -120,7 +143,6 @@ def score_distance_fit(fit: float) -> int:
 
 
 def score_training(training: str) -> int:
-    """調教評価文字列からスコア"""
     t = training.upper()
     if any(k in t for k in ["A", "◎", "素晴", "抜群", "絶好"]):
         return 5
@@ -139,10 +161,30 @@ def calc_score(horse: dict) -> int:
         + score_weight_change(horse["weight_change"])
         + score_gate(horse["gate"])
         + score_agari3f(horse.get("agari3f_avg"))
-        + score_jockey(horse.get("jockey_win_rate", 0.10))
+        + score_jockey(horse.get("jockey_win_rate", 0.10), horse.get("jockey", ""))
         + score_distance_fit(horse.get("distance_fit", 0.5))
         + score_training(horse.get("training", "B"))
     )
+
+
+def find_anaba(horses: list[dict]) -> list[dict]:
+    """4〜9人気で前走成績・上がりが良い穴馬候補を返す"""
+    candidates = []
+    for h in horses:
+        ninki = h.get("ninki", 0)
+        if ninki == 0 or not (4 <= ninki <= 9):
+            continue
+        recent3 = h.get("recent3", [5, 5, 5])
+        avg = sum(recent3) / len(recent3) if recent3 else 5
+        agari = h.get("agari3f_avg")
+        jockey = h.get("jockey", "")
+        is_elite = any(name in jockey for name in ELITE_JOCKEYS)
+
+        # 条件：直近3走平均5着以内 or 上がり34.5以下 or エリート騎手
+        if avg <= 5 or (agari is not None and agari <= 34.5) or is_elite:
+            candidates.append(h)
+
+    return sorted(candidates, key=lambda h: h.get("score", 0), reverse=True)[:3]
 
 
 def rank_horses(horses: list[dict]) -> list[dict]:
