@@ -111,13 +111,21 @@ def _fetch_past_results(race_id: str) -> dict:
                 continue
 
             past_tds = row.find_all("td", class_=lambda c: c and "Past" in c)
-            places, agari3f_list, distances, tracks, conditions = [], [], [], [], []
+            places, distances, tracks, conditions = [], [], [], []
+            agari3f_list = []
 
             for td in past_tds:
                 td_text = td.get_text(separator=" ", strip=True)
+                is_g_race = bool(re.search(r"GI{1,3}", td_text))
 
-                # GI/GII/GIII（G1/G2/G3）以外はスキップ
-                if not re.search(r"GI{1,3}", td_text):
+                # 上がり3F: G条件に関係なく全レースから取得（3走分）
+                if len(agari3f_list) < 3:
+                    m_agari = re.search(r"\b(3[0-9]\.\d)\b", td_text)
+                    if m_agari:
+                        agari3f_list.append(float(m_agari.group(1)))
+
+                # 着順・距離・適性はG1/G2/G3のみ参照
+                if not is_g_race:
                     continue
 
                 # 着順
@@ -142,19 +150,17 @@ def _fetch_past_results(race_id: str) -> dict:
                 cond = next((c for c in ["稍重", "不良", "重", "良"] if c in td_text), None)
                 conditions.append(cond)
 
-                # 上がり3F: "34.5" のような小数（30〜39秒台）
-                m_agari = re.search(r"\b(3[0-9]\.\d)\b", td_text)
-                agari3f_list.append(float(m_agari.group(1)) if m_agari else None)
-
                 if len(places) >= 3:
                     break
 
             while len(places) < 3:
                 places.append(5)
-                agari3f_list.append(None)
                 distances.append(0)
                 tracks.append(None)
                 conditions.append(None)
+
+            while len(agari3f_list) < 3:
+                agari3f_list.append(None)
 
             result[number] = {
                 "recent3": list(reversed(places[:3])),
