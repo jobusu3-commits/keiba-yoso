@@ -116,7 +116,7 @@ def _fetch_past_results(race_id: str) -> dict:
 
             for td in past_tds:
                 td_text = td.get_text(separator=" ", strip=True)
-                is_g_race = bool(re.search(r"GI{1,3}", td_text))
+                is_g_race = bool(re.search(r"GI{1,3}|\(OP\)|（OP）|オープン", td_text))
 
                 # 上がり3F: G条件に関係なく全レースから取得（3走分）
                 if len(agari3f_list) < 3:
@@ -124,7 +124,7 @@ def _fetch_past_results(race_id: str) -> dict:
                     if m_agari:
                         agari3f_list.append(float(m_agari.group(1)))
 
-                # 着順・距離・適性はG1/G2/G3のみ参照
+                # 着順・距離・適性はG戦・OPクラス以上のみ参照
                 if not is_g_race:
                     continue
 

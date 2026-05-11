@@ -53,17 +53,29 @@ def advise(ranked: list[dict], budget: int, anaba: list[dict] = None) -> dict:
             "理由": "スコア順に1・2・3着を予想（高配当狙い）",
         }
 
-    # 穴馬三連複（穴馬がいる場合）
+    # 穴馬三連複（複数パターン）
     if anaba and top and second:
-        for ana in anaba[:1]:
-            nums_set = sorted({top["number"], second["number"], ana["number"]})
-            if len(nums_set) == 3:
-                amount = int(budget * 0.05 / 100) * 100
-                nums_str = "-".join(str(n) for n in nums_set)
-                result["三連複（穴馬込み）"] = {
-                    "買い目": f"{nums_str}（穴：{ana['number']}番 {ana['name']}）",
-                    "金額": amount,
-                    "理由": f"{ana['name']}（{ana.get('ninki', '?')}人気）を穴馬として組み込んだ高配当狙い",
-                }
+        amount = int(budget * 0.05 / 100) * 100
+        bought = set()
+        count = 0
+        for ana in anaba[:2]:
+            for base_a, base_b in [(top, second), (top, third), (second, third)]:
+                if base_a is None or base_b is None:
+                    continue
+                nums_set = tuple(sorted({base_a["number"], base_b["number"], ana["number"]}))
+                if len(nums_set) == 3 and nums_set not in bought:
+                    bought.add(nums_set)
+                    nums_str = "-".join(str(n) for n in nums_set)
+                    key = "三連複（穴馬込み）" if count == 0 else f"三連複（穴馬込み）{count + 1}"
+                    result[key] = {
+                        "買い目": f"{nums_str}（穴：{ana['number']}番 {ana['name']}）",
+                        "金額": amount,
+                        "理由": f"{ana['name']}（{ana.get('ninki', '?')}人気）を穴馬として組み込んだ高配当狙い",
+                    }
+                    count += 1
+                    if count >= 3:
+                        break
+            if count >= 3:
+                break
 
     return result

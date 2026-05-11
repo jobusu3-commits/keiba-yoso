@@ -21,17 +21,17 @@ ELITE_JOCKEYS = {
 
 def score_ninki(ninki: int) -> int:
     if ninki == 0:
-        return 3
-    if ninki == 1:
-        return 10
-    elif ninki == 2:
-        return 5
-    elif ninki == 3:
-        return 6
-    elif ninki <= 5:
-        return 4
-    else:
         return 2
+    if ninki == 1:
+        return 8
+    elif ninki == 2:
+        return 6
+    elif ninki == 3:
+        return 4
+    elif ninki <= 5:
+        return 3
+    else:
+        return 1
 
 
 def score_odds(odds: float) -> int:
@@ -174,7 +174,7 @@ def score_training(training: str) -> int:
 
 
 def calc_score(horse: dict) -> int:
-    """地力スコア（オッズ・人気を含まない純粋な能力評価）"""
+    """地力スコア（人気を軽く加味した総合評価）"""
     recent3 = horse.get("recent3", [])
     return (
         score_last_place(horse["last_place"])
@@ -186,6 +186,7 @@ def calc_score(horse: dict) -> int:
         + score_jockey(horse.get("jockey_win_rate", 0.10), horse.get("jockey", ""))
         + score_distance_fit(horse.get("distance_fit", 0.5))
         + score_training(horse.get("training", "B"))
+        + score_ninki(horse.get("ninki", 0))
     )
 
 
